@@ -55,13 +55,6 @@ func (impl *Funnel) run() {
 	for {
 		select {
 		case job := <-impl.request:
-			err := impl.weighted.Acquire(impl.ctx, 1)
-			if err != nil {
-				job.output <- &Output{
-					err: err,
-				}
-				continue
-			}
 
 			go func() {
 				defer impl.weighted.Release(1)
@@ -94,6 +87,9 @@ func (impl *Funnel) run() {
 func (impl *Funnel) Request(job *Job) (string, error) {
 	if impl.stop {
 		return "", fmt.Errorf("acceptance has stopped")
+	}
+	if err := impl.weighted.Acquire(impl.ctx, 1); err != nil {
+		return "", err
 	}
 	impl.wg.Add(1)
 	job.output = make(chan *Output, 1)
