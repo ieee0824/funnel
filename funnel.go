@@ -26,6 +26,14 @@ func (o *Output) String() string {
 	return o.outStr
 }
 
+func (o *Output) Stdout() string {
+	return o.outStr
+}
+
+func (o *Output) Stderr() string {
+	return o.outErrStr
+}
+
 func (o *Output) Error() error {
 	return o.err
 }
@@ -106,12 +114,12 @@ func (impl *Funnel) run() {
 	}
 }
 
-func (impl *Funnel) Request(job *Job) (string, error) {
+func (impl *Funnel) Request(job *Job) (*Output, error) {
 	if impl.stop {
-		return "", fmt.Errorf("acceptance has stopped")
+		return nil, fmt.Errorf("acceptance has stopped")
 	}
 	if err := impl.weighted.Acquire(impl.ctx, 1); err != nil {
-		return "", err
+		return nil, err
 	}
 	impl.wg.Add(1)
 	job.output = make(chan *Output, 1)
@@ -120,8 +128,8 @@ func (impl *Funnel) Request(job *Job) (string, error) {
 	out := <-job.output
 	close(job.output)
 	if out.err != nil {
-		return "", out.err
+		return nil, out.err
 	}
 
-	return out.outStr, nil
+	return out, nil
 }
