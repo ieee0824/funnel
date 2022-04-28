@@ -107,6 +107,7 @@ func (impl *Funnel) Request(job *Job) (string, error) {
 	impl.request <- job
 
 	out := <-job.output
+	close(job.output)
 	if out.err != nil {
 		return "", out.err
 	}
