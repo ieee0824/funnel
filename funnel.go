@@ -39,6 +39,17 @@ func New(maxParallelProcessNum int, ctx context.Context) *Funnel {
 	return impl
 }
 
+func NewFunnelWithWaitGroup(maxParallelProcessNum int, wg *sync.WaitGroup, ctx context.Context) *Funnel {
+	impl := &Funnel{
+		request:  make(chan *Job, 1024),
+		wg:       wg,
+		ctx:      ctx,
+		weighted: semaphore.NewWeighted(int64(maxParallelProcessNum)),
+	}
+	go impl.run()
+	return impl
+}
+
 type Funnel struct {
 	request  chan *Job
 	ctx      context.Context
