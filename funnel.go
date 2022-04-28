@@ -1,6 +1,7 @@
 package funnel
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -16,8 +17,9 @@ type Job struct {
 }
 
 type Output struct {
-	outStr string
-	err    error
+	outStr    string
+	outErrStr string
+	err       error
 }
 
 func (o *Output) String() string {
@@ -70,21 +72,30 @@ func (impl *Funnel) run() {
 			go func() {
 				defer impl.weighted.Release(1)
 				defer impl.wg.Done()
+				stdout := new(bytes.Buffer)
+				stderr := new(bytes.Buffer)
 
 				cmd := exec.Command(
 					job.Command,
 					job.Options...,
 				)
 
-				outStr, err := cmd.Output()
+				cmd.Stdout = stdout
+				cmd.Stderr = stderr
+
+				err := cmd.Run()
 				if err != nil {
 					job.output <- &Output{
-						err: err,
+						outStr:    stdout.String(),
+						outErrStr: stderr.String(),
+						err:       err,
 					}
 					return
 				}
+
 				job.output <- &Output{
-					outStr: string(outStr),
+					outStr:    stdout.String(),
+					outErrStr: stderr.String(),
 				}
 			}()
 
