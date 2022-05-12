@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/semaphore"
 )
@@ -91,8 +92,7 @@ func (impl *Funnel) run() {
 				cmd.Stdout = stdout
 				cmd.Stderr = stderr
 
-				err := cmd.Run()
-				if err != nil {
+				if err := cmd.Start(); err != nil {
 					job.output <- &Output{
 						outStr:    stdout.String(),
 						outErrStr: stderr.String(),
@@ -101,6 +101,16 @@ func (impl *Funnel) run() {
 					return
 				}
 
+				if err := cmd.Wait(); err != nil {
+					job.output <- &Output{
+						outStr:    stdout.String(),
+						outErrStr: stderr.String(),
+						err:       err,
+					}
+					return
+				}
+
+				time.Sleep(100 * time.Millisecond)
 				job.output <- &Output{
 					outStr:    stdout.String(),
 					outErrStr: stderr.String(),
