@@ -110,7 +110,7 @@ func (impl *Funnel) run() {
 					return
 				}
 
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(10 * time.Millisecond)
 				job.output <- &Output{
 					outStr:    stdout.String(),
 					outErrStr: stderr.String(),
