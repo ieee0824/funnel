@@ -39,9 +39,6 @@ func main() {
 		}(job, &wg)
 	}
 
-	// wait all request completed
-	// this wait group is used to stop safely
-	f.Wg().Wait()
-	// wait receive
+	// Wait until all Request calls have returned.
 	wg.Wait()
 }
